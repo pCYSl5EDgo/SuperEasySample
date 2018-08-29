@@ -1,0 +1,1 @@
+readonly struct Count : Unity.Entities.IComponentData { }

@@ -7,6 +7,7 @@ using Unity.Collections;
 
 using UnityEngine;
 
+[UpdateBefore(typeof(EndFrameTransformSystem))]
 public class MoveSystem : JobComponentSystem
 {
     [BurstCompile]

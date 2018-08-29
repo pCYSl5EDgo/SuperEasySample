@@ -308,14 +308,14 @@
 -d:ENABLE_BURST_AOT
 -d:UNITY_TEAM_LICENSE
 -d:UNITY_DISABLE_AUTOMATIC_SYSTEM_BOOTSTRAP
--i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/CountUpSample/Preload.cs"
--i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/CountUpSample/Scripts/ECS/IComponentData/Count.cs"
--i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/CountUpSample/Scripts/ECS/IComponentData/Velocity.cs"
--i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/CountUpSample/Scripts/ECS/JobComponentSystem/Click.cs"
--i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/CountUpSample/Scripts/ECS/JobComponentSystem/ClickSpawnCube.cs"
--i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/CountUpSample/Scripts/ECS/JobComponentSystem/CountUp.cs"
--i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/CountUpSample/Scripts/ECS/JobComponentSystem/Move.cs"
--i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/CountUpSample/Scripts/Manager_CountUp.cs"
--i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/CountUpSample/Scripts/Manager_MovingCubes.cs"
+-i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/Samples/Preload.cs"
+-i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/Samples/Scripts/ECS/ComponentSystem/Click.cs"
+-i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/Samples/Scripts/ECS/ComponentSystem/ClickSpawnCube.cs"
+-i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/Samples/Scripts/ECS/ComponentSystem/CountUp.cs"
+-i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/Samples/Scripts/ECS/IComponentData/Count.cs"
+-i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/Samples/Scripts/ECS/IComponentData/Velocity.cs"
+-i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/Samples/Scripts/ECS/JobComponentSystem/Move.cs"
+-i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/Samples/Scripts/Manager_CountUp.cs"
+-i:"C:/Users/I/Saved Games/Super Easy Sample/Assets/Samples/Scripts/Manager_MovingCubes.cs"
 @Assets\mcs.rsp
 -v:0

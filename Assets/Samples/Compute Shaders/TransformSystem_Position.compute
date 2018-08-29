@@ -1,0 +1,11 @@
+﻿#pragma kernel CSMain
+
+StructuredBuffer<float3> _PositionBuffer;
+RWStructuredBuffer<float4x4> _ResultBuffer;
+
+[numthreads(512,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	const uint index = id.x;
+	_ResultBuffer[index] = float4x4(float4(1, 0, 0, 0), float4(0, 1, 0, 0), float4(0, 0, 1, 0), float4(_PositionBuffer[index], 1));
+}

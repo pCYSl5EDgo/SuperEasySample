@@ -1,11 +1,10 @@
 ﻿using Unity.Entities;
 using Unity.Jobs;
 using Unity.Collections;
-
 using UnityEngine;
 
 [AlwaysUpdateSystem]
-sealed class ClickSystem : JobComponentSystem
+sealed class ClickSystem : ComponentSystem
 {
     EntityArchetype entityArchetype;
     ComponentGroup g;
@@ -16,25 +15,24 @@ sealed class ClickSystem : JobComponentSystem
         g = GetComponentGroup(componentTypes);
     }
 
-    protected override JobHandle OnUpdate(JobHandle inputDeps)
+    protected override void OnUpdate()
     {
         if (Input.GetMouseButton(0))
             EntityManager.CreateEntity(entityArchetype);
         else if (Input.GetMouseButton(1))
         {
-            var array = g.GetEntityArray();
-            if (array.Length == 0)
-                return inputDeps;
-            using (var dest = new NativeArray<Entity>(array.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory))
+            var source = g.GetEntityArray();
+            if (source.Length == 0)
+                return;
+            using (var results = new NativeArray<Entity>(source.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory))
             {
                 new CopyEntities
                 {
-                    Results = dest,
-                    Source = array,
-                }.Schedule(array.Length, 256, inputDeps).Complete();
-                EntityManager.DestroyEntity(dest);
+                    Results = results,
+                    Source = source,
+                }.Schedule(source.Length, 256).Complete();
+                EntityManager.DestroyEntity(results);
             }
         }
-        return inputDeps;
     }
 }

@@ -20,7 +20,7 @@ namespace Unity.Entities
         }
 
         public const int MaximumTypesCount = 1024 * 10;
-        private static ComponentType[] s_Types;
+        private static TypeManager.ComponentType[] s_Types;
         private static volatile int s_Count;
         private static SpinLock s_CreateTypeLock;
         public static int ObjectOffset;
@@ -36,7 +36,7 @@ namespace Unity.Entities
             public int Offset;
         }
 
-        public struct ComponentType
+        public readonly struct ComponentType
         {
             public ComponentType(Type type, int size, TypeCategory category, FastEquality.TypeInfo typeInfo, EntityOffsetInfo[] entityOffsets, UInt64 memoryOrdering, int bufferCapacity, int elementSize)
             {

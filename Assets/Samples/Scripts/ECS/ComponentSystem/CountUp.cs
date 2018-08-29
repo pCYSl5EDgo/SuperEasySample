@@ -1,24 +1,22 @@
 using TMPro;
-
 using Unity.Entities;
 using Unity.Jobs;
 
 [AlwaysUpdateSystem]
-sealed class CountUpSystem : JobComponentSystem
+sealed class CountUpSystem : ComponentSystem
 {
-    TMP_Text countDownText;
+    readonly TMP_Text countDownText;
     ComponentGroup g;
     uint cachedCount = 0;
+    
     public CountUpSystem(TMP_Text countDownText) => this.countDownText = countDownText;
-
     protected override void OnCreateManager(int capacity) => g = GetComponentGroup(ComponentType.ReadOnly<Count>());
 
-    protected override JobHandle OnUpdate(JobHandle inputDeps)
+    protected override void OnUpdate()
     {
         uint current = (uint)g.CalculateLength();
-        if (current == cachedCount) return inputDeps;
+        if (current == cachedCount) return;
         cachedCount = current;
         countDownText.text = cachedCount.ToString();
-        return inputDeps;
     }
 }

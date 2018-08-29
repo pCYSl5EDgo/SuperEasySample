@@ -19,10 +19,7 @@ namespace Unity.Entities
         public AccessMode AccessModeType;
         public int BufferCapacity;
 
-        public static ComponentType Create<T>()
-        {
-            return FromTypeIndex(TypeManager.GetTypeIndex<T>());
-        }
+        public static ComponentType Create<T>() => FromTypeIndex(TypeManager.GetTypeIndex<T>());
 
         public static ComponentType FromTypeIndex(int typeIndex)
         {
@@ -84,15 +81,9 @@ namespace Unity.Entities
             }
         }
 
-        public Type GetManagedType()
-        {
-            return TypeManager.GetType(TypeIndex);
-        }
+        public Type GetManagedType() => TypeManager.GetType(TypeIndex);
 
-        public static implicit operator ComponentType(Type type)
-        {
-            return new ComponentType(type, AccessMode.ReadWrite);
-        }
+        public static implicit operator ComponentType(Type type) => new ComponentType(type, AccessMode.ReadWrite);
 
         public static bool operator <(ComponentType lhs, ComponentType rhs)
         {
@@ -104,25 +95,13 @@ namespace Unity.Entities
             return lhs.TypeIndex < rhs.TypeIndex;
         }
 
-        public static bool operator >(ComponentType lhs, ComponentType rhs)
-        {
-            return rhs < lhs;
-        }
+        public static bool operator >(ComponentType lhs, ComponentType rhs) => rhs < lhs;
 
-        public static bool operator ==(ComponentType lhs, ComponentType rhs)
-        {
-            return lhs.TypeIndex == rhs.TypeIndex && lhs.BufferCapacity == rhs.BufferCapacity &&
-                   lhs.AccessModeType == rhs.AccessModeType;
-        }
+        public static bool operator ==(ComponentType lhs, ComponentType rhs) => lhs.TypeIndex == rhs.TypeIndex && lhs.BufferCapacity == rhs.BufferCapacity && lhs.AccessModeType == rhs.AccessModeType;
 
-        public static bool operator !=(ComponentType lhs, ComponentType rhs)
-        {
-            return lhs.TypeIndex != rhs.TypeIndex || lhs.BufferCapacity != rhs.BufferCapacity ||
-                   lhs.AccessModeType != rhs.AccessModeType;
-        }
+        public static bool operator !=(ComponentType lhs, ComponentType rhs) => lhs.TypeIndex != rhs.TypeIndex || lhs.BufferCapacity != rhs.BufferCapacity || lhs.AccessModeType != rhs.AccessModeType;
 
-        internal static unsafe bool CompareArray(ComponentType* type1, int typeCount1, ComponentType* type2,
-            int typeCount2)
+        internal static unsafe bool CompareArray(ComponentType* type1, int typeCount1, ComponentType* type2, int typeCount2)
         {
             if (typeCount1 != typeCount2)
                 return false;
@@ -152,7 +131,7 @@ namespace Unity.Entities
 
         public override bool Equals(object obj)
         {
-            return obj is ComponentType && (ComponentType) obj == this;
+            return obj is ComponentType && (ComponentType)obj == this;
         }
 
         public override int GetHashCode()
