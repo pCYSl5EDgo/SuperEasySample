@@ -1,0 +1,8 @@
+{
+    "name": "Unity.Collections",
+    "references": [],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+	"allowUnsafeCode": true
+}
