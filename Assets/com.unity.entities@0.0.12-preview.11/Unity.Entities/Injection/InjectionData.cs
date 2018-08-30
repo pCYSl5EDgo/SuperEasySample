@@ -14,8 +14,12 @@ namespace Unity.Entities
         public InjectionData(FieldInfo field, Type genericType, bool isReadOnly)
         {
             IndexInComponentGroup = -1;
-            FieldOffset = UnsafeUtility.GetFieldOffset(field);
 
+#if UNITY_WSA
+            FieldOffset = System.Runtime.InteropServices.Marshal.OffsetOf(field.DeclaringType, field.Name).ToInt32();
+#else
+            FieldOffset = UnsafeUtility.GetFieldOffset(field);
+#endif
             var accessMode = isReadOnly ? ComponentType.AccessMode.ReadOnly : ComponentType.AccessMode.ReadWrite;
             ComponentType = new ComponentType(genericType, accessMode);
             IsReadOnly = isReadOnly;

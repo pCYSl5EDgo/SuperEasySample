@@ -11,11 +11,11 @@ namespace Unity.Entities
     {
         private NativeMultiHashMap<int, int> m_HashLookup = new NativeMultiHashMap<int, int>(128, Allocator.Persistent);
 
-        private List<object>    m_SharedComponentData = new List<object>();
+        private List<object> m_SharedComponentData = new List<object>();
         private NativeList<int> m_SharedComponentRefCount = new NativeList<int>(0, Allocator.Persistent);
         private NativeList<int> m_SharedComponentType = new NativeList<int>(0, Allocator.Persistent);
         private NativeList<int> m_SharedComponentVersion = new NativeList<int>(0, Allocator.Persistent);
-        private int             m_FreeListIndex;
+        private int m_FreeListIndex;
 
         public SharedComponentDataManager()
         {
@@ -47,7 +47,7 @@ namespace Unity.Entities
             {
                 var data = m_SharedComponentData[i];
                 if (data != null && data.GetType() == typeof(T))
-                    sharedComponentValues.Add((T) m_SharedComponentData[i]);
+                    sharedComponentValues.Add((T)m_SharedComponentData[i]);
             }
         }
 
@@ -61,7 +61,7 @@ namespace Unity.Entities
                 var data = m_SharedComponentData[i];
                 if (data != null && data.GetType() == typeof(T))
                 {
-                    sharedComponentValues.Add((T) m_SharedComponentData[i]);
+                    sharedComponentValues.Add((T)m_SharedComponentData[i]);
                     sharedComponentIndices.Add(i);
                 }
             }
@@ -114,11 +114,15 @@ namespace Unity.Entities
                 var data = m_SharedComponentData[itemIndex];
                 if (data != null && m_SharedComponentType[itemIndex] == typeIndex)
                 {
-                    ulong handle;
-                    var value = PinGCObjectAndGetAddress(data, out handle);
+#if UNITY_WSA
+                    var value = System.Runtime.InteropServices.Marshal.AllocHGlobal(System.Runtime.InteropServices.Marshal.SizeOf(typeInfo));
+                    var res = FastEquality.Equals(newData, value.ToPointer(), typeInfo);
+                    System.Runtime.InteropServices.Marshal.FreeHGlobal(value);
+#else
+                    var value = PinGCObjectAndGetAddress(data, out var handle);
                     var res = FastEquality.Equals(newData, value, typeInfo);
                     UnsafeUtility.ReleaseGCObject(handle);
-
+#endif
                     if (res)
                         return itemIndex;
                 }
@@ -130,13 +134,15 @@ namespace Unity.Entities
         internal unsafe int InsertSharedComponentAssumeNonDefault(int typeIndex, int hashCode, object newData,
             FastEquality.TypeInfo typeInfo)
         {
-            ulong handle;
-            var newDataPtr = PinGCObjectAndGetAddress(newData, out handle);
-
+#if UNITY_WSA
+            var newDataPtr = PinGCObjectAndGetAddress(newData, out var handle);
             var index = FindNonDefaultSharedComponentIndex(typeIndex, hashCode, newDataPtr, typeInfo);
-
+            System.Runtime.InteropServices.Marshal.FreeHGlobal(handle);
+#else
+            var newDataPtr = PinGCObjectAndGetAddress(newData, out var handle);
+            var index = FindNonDefaultSharedComponentIndex(typeIndex, hashCode, newDataPtr, typeInfo);
             UnsafeUtility.ReleaseGCObject(handle);
-
+#endif
             if (-1 == index)
                 index = Add(typeIndex, hashCode, newData);
             else
@@ -192,7 +198,7 @@ namespace Unity.Entities
             if (index == 0)
                 return default(T);
 
-            return (T) m_SharedComponentData[index];
+            return (T)m_SharedComponentData[index];
         }
 
         public object GetSharedComponentDataBoxed(int index)
@@ -211,19 +217,27 @@ namespace Unity.Entities
 
         private static unsafe int GetHashCodeFast(object target, FastEquality.TypeInfo typeInfo)
         {
-            ulong handle;
-            var ptr = PinGCObjectAndGetAddress(target, out handle);
+#if UNITY_WSA
+            var ptr = PinGCObjectAndGetAddress(target, out var handle);
+            var hashCode = FastEquality.GetHashCode(ptr, typeInfo);
+            System.Runtime.InteropServices.Marshal.FreeHGlobal(handle);
+#else
+            var ptr = PinGCObjectAndGetAddress(target, out var handle);
             var hashCode = FastEquality.GetHashCode(ptr, typeInfo);
             UnsafeUtility.ReleaseGCObject(handle);
-
+#endif
             return hashCode;
         }
 
+#if UNITY_WSA
+        private static unsafe void* PinGCObjectAndGetAddress(object target, out IntPtr handle) => (byte*)(void*)((handle = System.Runtime.InteropServices.Marshal.AllocHGlobal(System.Runtime.InteropServices.Marshal.SizeOf(target))).ToPointer()) + TypeManager.ObjectOffset;
+#else
         private static unsafe void* PinGCObjectAndGetAddress(object target, out ulong handle)
         {
             var ptr = UnsafeUtility.PinGCObjectAndGetAddress(target, out handle);
             return (byte*) ptr + TypeManager.ObjectOffset;
         }
+#endif
 
 
         public void RemoveReference(int index)
@@ -251,9 +265,9 @@ namespace Unity.Entities
             NativeMultiHashMapIterator<int> iter;
             if (!m_HashLookup.TryGetFirstValue(hashCode, out itemIndex, out iter))
             {
-                #if ENABLE_UNITY_COLLECTIONS_CHECKS
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
                 throw new System.ArgumentException("RemoveReference didn't find element in in hashtable");
-                #endif
+#endif
             }
 
             do
@@ -391,7 +405,7 @@ namespace Unity.Entities
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (!IsEmpty())
-               throw new System.ArgumentException("SharedComponentManager must be empty when deserializing a scene");
+                throw new System.ArgumentException("SharedComponentManager must be empty when deserializing a scene");
 #endif
 
             m_HashLookup.Clear();

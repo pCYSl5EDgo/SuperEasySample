@@ -582,7 +582,7 @@ PlayerSettings:
   scriptingRuntimeVersion: 1
   apiCompatibilityLevelPerPlatform:
     Metro: 6
-    Standalone: 3
+    Standalone: 6
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
   metroPackageName: Template_3D

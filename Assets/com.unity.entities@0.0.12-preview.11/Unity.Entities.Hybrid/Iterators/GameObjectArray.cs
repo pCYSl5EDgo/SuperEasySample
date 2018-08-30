@@ -114,7 +114,11 @@ namespace Unity.Entities
                 IsReadOnly = isReadOnly,
                 AccessMode = isReadOnly ? ComponentType.AccessMode.ReadOnly : ComponentType.AccessMode.ReadWrite,
                 IndexInComponentGroup = -1,
+#if UNITY_WSA
+                FieldOffset = System.Runtime.InteropServices.Marshal.OffsetOf(field.DeclaringType, field.Name).ToInt32(),
+#else
                 FieldOffset = UnsafeUtility.GetFieldOffset(field),
+#endif
                 ComponentRequirements = new[] { typeof(Transform) }
             };
         }

@@ -10,33 +10,33 @@ namespace Unity.Entities
 {
     public unsafe abstract class ComponentSystemBase : ScriptBehaviourManager
     {
-        InjectComponentGroupData[] 			m_InjectedComponentGroups;
-        InjectFromEntityData                m_InjectFromEntityData;
+        InjectComponentGroupData[] m_InjectedComponentGroups;
+        InjectFromEntityData m_InjectFromEntityData;
 
-        ComponentGroupArrayStaticCache[] 	m_CachedComponentGroupArrays;
-        ComponentGroup[] 				    m_ComponentGroups;
+        ComponentGroupArrayStaticCache[] m_CachedComponentGroupArrays;
+        ComponentGroup[] m_ComponentGroups;
 
-        NativeList<int>                     m_JobDependencyForReadingManagers;
-        NativeList<int>                     m_JobDependencyForWritingManagers;
+        NativeList<int> m_JobDependencyForReadingManagers;
+        NativeList<int> m_JobDependencyForWritingManagers;
 
-        internal int*                       m_JobDependencyForReadingManagersPtr;
-        internal int                        m_JobDependencyForReadingManagersLength;
+        internal int* m_JobDependencyForReadingManagersPtr;
+        internal int m_JobDependencyForReadingManagersLength;
 
-        internal int*                       m_JobDependencyForWritingManagersPtr;
-        internal int                        m_JobDependencyForWritingManagersLength;
+        internal int* m_JobDependencyForWritingManagersPtr;
+        internal int m_JobDependencyForWritingManagersLength;
 
-        uint                                m_LastSystemVersion;
-        
-        internal ComponentJobSafetyManager  m_SafetyManager;
-        internal EntityManager              m_EntityManager;
-        World                               m_World;
+        uint m_LastSystemVersion;
 
-        bool                                m_AlwaysUpdateSystem;
-        internal bool                       m_PreviouslyEnabled;
+        internal ComponentJobSafetyManager m_SafetyManager;
+        internal EntityManager m_EntityManager;
+        World m_World;
+
+        bool m_AlwaysUpdateSystem;
+        internal bool m_PreviouslyEnabled;
 
         public bool Enabled { get; set; } = true;
-        public ComponentGroup[] 			ComponentGroups => m_ComponentGroups;
-        
+        public ComponentGroup[] ComponentGroups => m_ComponentGroups;
+
         public uint GlobalSystemVersion => m_EntityManager.GlobalSystemVersion;
 
         public bool ShouldRunSystem()
@@ -54,7 +54,7 @@ namespace Unity.Entities
 
             // If all the groups are empty, skip it.
             // (There’s no way to know what they key value is without other markup)
-            for (int i = 0;i != length;i++)
+            for (int i = 0; i != length; i++)
             {
                 if (!m_ComponentGroups[i].IsEmptyIgnoreFilter)
                     return true;
@@ -98,9 +98,9 @@ namespace Unity.Entities
         {
             foreach (var group in m_ComponentGroups)
             {
-                #if ENABLE_UNITY_COLLECTIONS_CHECKS
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
                 group.DisallowDisposing = null;
-                #endif
+#endif
                 group.Dispose();
             }
             m_ComponentGroups = null;
@@ -123,7 +123,7 @@ namespace Unity.Entities
             CompleteDependencyInternal();
             UpdateInjectedComponentGroups();
         }
-        
+
         protected virtual void OnStartRunning()
         {
 
@@ -145,7 +145,7 @@ namespace Unity.Entities
         {
             m_LastSystemVersion = EntityManager.Entities->GlobalSystemVersion;
         }
-        
+
         protected EntityManager EntityManager => m_EntityManager;
         protected World World => m_World;
 
@@ -155,7 +155,7 @@ namespace Unity.Entities
             Array.Resize(ref array, array.Length + 1);
             array[array.Length - 1] = item;
         }
-        
+
         public ArchetypeChunkComponentType<T> GetArchetypeChunkComponentType<T>(bool isReadOnly = false)
             where T : struct, IComponentData
         {
@@ -182,14 +182,14 @@ namespace Unity.Entities
             AddReaderWriter(ComponentType.ReadOnly<Entity>());
             return EntityManager.GetArchetypeChunkEntityType();
         }
-        
+
         public ComponentDataFromEntity<T> GetComponentDataFromEntity<T>(bool isReadOnly = false)
             where T : struct, IComponentData
         {
             AddReaderWriter(isReadOnly ? ComponentType.ReadOnly<T>() : ComponentType.Create<T>());
             return EntityManager.GetComponentDataFromEntity<T>(isReadOnly);
         }
-        
+
         internal void AddReaderWriter(ComponentType componentType)
         {
             if (CalculateReaderWriterDependency.Add(componentType, m_JobDependencyForReadingManagers, m_JobDependencyForWritingManagers))
@@ -202,7 +202,7 @@ namespace Unity.Entities
                 CompleteDependencyInternal();
             }
         }
-        
+
         internal ComponentGroup GetComponentGroupInternal(ComponentType* componentTypes, int count)
         {
             for (var i = 0; i != m_ComponentGroups.Length; i++)
@@ -213,13 +213,13 @@ namespace Unity.Entities
 
             var group = EntityManager.CreateComponentGroup(componentTypes, count);
             group.SetFilterChangedRequiredVersion(m_LastSystemVersion);
-            #if ENABLE_UNITY_COLLECTIONS_CHECKS
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             group.DisallowDisposing = "ComponentGroup.Dispose() may not be called on a ComponentGroup created with ComponentSystem.GetComponentGroup. The ComponentGroup will automatically be disposed by the ComponentSystem.";
-            #endif
-            
+#endif
+
             ArrayUtilityAdd(ref m_ComponentGroups, group);
 
-            for (int i = 0;i != count;i++)
+            for (int i = 0; i != count; i++)
                 AddReaderWriter(componentTypes[i]);
 
             //@TODO: Shouldn't this sync fence on the newly depent types?
@@ -261,10 +261,24 @@ namespace Unity.Entities
         {
             if (null == m_InjectedComponentGroups)
                 return;
+#if UNITY_WSA
+            var pinnedSystemPtr = System.Runtime.InteropServices.Marshal.AllocHGlobal(System.Runtime.InteropServices.Marshal.SizeOf(this));
+            try
+            {
+                var _ = (byte*)pinnedSystemPtr.ToPointer();
+                foreach (var group in m_InjectedComponentGroups)
+                    group.UpdateInjection(_);
 
-            ulong gchandle;
-            var pinnedSystemPtr = (byte*)UnsafeUtility.PinGCObjectAndGetAddress(this, out gchandle);
-
+                m_InjectFromEntityData.UpdateInjection(_, EntityManager);
+            }
+            catch
+            {
+                System.Runtime.InteropServices.Marshal.FreeHGlobal(pinnedSystemPtr);
+                throw;
+            }
+            System.Runtime.InteropServices.Marshal.FreeHGlobal(pinnedSystemPtr);
+#else
+            var pinnedSystemPtr = (byte*)UnsafeUtility.PinGCObjectAndGetAddress(this, out var gchandle);
             try
             {
                 foreach (var group in m_InjectedComponentGroups)
@@ -278,6 +292,7 @@ namespace Unity.Entities
                 throw;
             }
             UnsafeUtility.ReleaseGCObject(gchandle);
+#endif
         }
 
         internal void CompleteDependencyInternal()
@@ -353,7 +368,7 @@ namespace Unity.Entities
         /// Called once per frame on the main thread.
         /// </summary>
         protected abstract void OnUpdate();
-}
+    }
 
     public abstract class JobComponentSystem : ComponentSystemBase
     {
@@ -376,7 +391,7 @@ namespace Unity.Entities
         unsafe void AfterOnUpdate(JobHandle outputJob, bool throwException)
         {
             AfterUpdateVersioning();
-            
+
             JobHandle.ScheduleBatchedJobs();
 
             AddDependencyInternal(outputJob);
@@ -489,7 +504,7 @@ namespace Unity.Entities
 
             var readerCount = AtomicSafetyHandle.GetReaderArray(h, 0, IntPtr.Zero);
             JobHandle* readers = stackalloc JobHandle[readerCount];
-            AtomicSafetyHandle.GetReaderArray(h, readerCount, (IntPtr) readers);
+            AtomicSafetyHandle.GetReaderArray(h, readerCount, (IntPtr)readers);
 
             for (var i = 0; i < readerCount; ++i)
             {
@@ -505,13 +520,13 @@ namespace Unity.Entities
 
         unsafe void EmergencySyncAllJobs()
         {
-            for (int i = 0;i != m_JobDependencyForReadingManagersLength;i++)
+            for (int i = 0; i != m_JobDependencyForReadingManagersLength; i++)
             {
                 int type = m_JobDependencyForReadingManagersPtr[i];
                 AtomicSafetyHandle.EnforceAllBufferJobsHaveCompleted(m_SafetyManager.GetSafetyHandle(type, true));
             }
 
-            for (int i = 0;i != m_JobDependencyForWritingManagersLength;i++)
+            for (int i = 0; i != m_JobDependencyForWritingManagersLength; i++)
             {
                 int type = m_JobDependencyForWritingManagersPtr[i];
                 AtomicSafetyHandle.EnforceAllBufferJobsHaveCompleted(m_SafetyManager.GetSafetyHandle(type, true));
@@ -519,7 +534,7 @@ namespace Unity.Entities
         }
 #endif
 
-        unsafe JobHandle GetDependency ()
+        unsafe JobHandle GetDependency()
         {
             return m_SafetyManager.GetDependency(m_JobDependencyForReadingManagersPtr, m_JobDependencyForReadingManagersLength, m_JobDependencyForWritingManagersPtr, m_JobDependencyForWritingManagersLength);
         }
@@ -533,8 +548,8 @@ namespace Unity.Entities
     public unsafe abstract class BarrierSystem : ComponentSystem
     {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS	
-        private List<EntityCommandBuffer> m_PendingBuffers;	
-#else	
+        private List<EntityCommandBuffer> m_PendingBuffers;
+#else
         private NativeList<EntityCommandBuffer> m_PendingBuffers;
 #endif
         private JobHandle m_ProducerHandle;
@@ -556,10 +571,10 @@ namespace Unity.Entities
         protected override void OnCreateManager(int capacity)
         {
             base.OnCreateManager(capacity);
-            
-#if ENABLE_UNITY_COLLECTIONS_CHECKS	
-            m_PendingBuffers = new List<EntityCommandBuffer>();	
-#else	
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            m_PendingBuffers = new List<EntityCommandBuffer>();
+#else
             m_PendingBuffers = new NativeList<EntityCommandBuffer>(Allocator.Persistent);
 #endif
         }
@@ -589,8 +604,8 @@ namespace Unity.Entities
 
             int length;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS	
-            length = m_PendingBuffers.Count;	
-#else	
+            length = m_PendingBuffers.Count;
+#else
             length = m_PendingBuffers.Length;	
 #endif
             for (int i = 0; i < length; ++i)

@@ -35,7 +35,11 @@ namespace Unity.Entities
             foreach (var field in fields)
             {
                 var fieldType = field.FieldType;
+#if UNITY_WSA
+                var offset = System.Runtime.InteropServices.Marshal.OffsetOf(type, field.Name).ToInt32();
+#else
                 var offset = UnsafeUtility.GetFieldOffset(field);
+#endif
 
                 if (fieldType.IsPointer)
                 {
@@ -170,12 +174,12 @@ namespace Unity.Entities
                 {
                     fixed (bool* isWriting = m_IsWriting)
                     {
-                        var streams = (ComponentGroupStream*) cacheBytes;
+                        var streams = (ComponentGroupStream*)cacheBytes;
 
                         for (var i = 0; i < staticCache.ComponentDataCount + staticCache.ComponentCount; i++)
                         {
                             componentTypes[i] = staticCache.ComponentTypes[i].TypeIndex;
-                            streams[i].FieldOffset = (ushort) staticCache.ComponentFieldOffsets[i];
+                            streams[i].FieldOffset = (ushort)staticCache.ComponentFieldOffsets[i];
                             isWriting[i] = staticCache.ComponentTypes[i].AccessModeType ==
                                            ComponentType.AccessMode.ReadWrite;
                         }
@@ -236,7 +240,7 @@ namespace Unity.Entities
                 {
                     fixed (bool* isWriting = m_IsWriting)
                     {
-                        var streams = (ComponentGroupStream*) cacheBytes;
+                        var streams = (ComponentGroupStream*)cacheBytes;
                         var totalCount = m_ComponentDataCount + m_ComponentCount;
                         for (var i = 0; i < totalCount; i++)
                         {
@@ -244,13 +248,13 @@ namespace Unity.Entities
                             m_ChunkIterator.GetCacheForType(componentTypes[i], isWriting[i], out cache,
                                 out indexInArcheType);
                             streams[i].SizeOf = cache.CachedSizeOf;
-                            streams[i].CachedPtr = (byte*) cache.CachedPtr;
+                            streams[i].CachedPtr = (byte*)cache.CachedPtr;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                             if (indexInArcheType > ushort.MaxValue)
                                 throw new ArgumentException(
                                     $"There is a maximum of {ushort.MaxValue} components on one entity.");
 #endif
-                            streams[i].TypeIndexInArchetype = (ushort) indexInArcheType;
+                            streams[i].TypeIndexInArchetype = (ushort)indexInArcheType;
                         }
                     }
                 }
@@ -275,11 +279,11 @@ namespace Unity.Entities
         {
             fixed (byte* cacheBytes = m_Caches)
             {
-                var streams = (ComponentGroupStream*) cacheBytes;
+                var streams = (ComponentGroupStream*)cacheBytes;
                 for (var i = 0; i != m_ComponentDataCount; i++)
                 {
-                    var componentPtr = (void*) (streams[i].CachedPtr + streams[i].SizeOf * index);
-                    var valuePtrOffsetted = (void**) (valuePtr + streams[i].FieldOffset);
+                    var componentPtr = (void*)(streams[i].CachedPtr + streams[i].SizeOf * index);
+                    var valuePtrOffsetted = (void**)(valuePtr + streams[i].FieldOffset);
 
                     *valuePtrOffsetted = componentPtr;
                 }
@@ -291,13 +295,15 @@ namespace Unity.Entities
         {
             fixed (byte* cacheBytes = m_Caches)
             {
-                var streams = (ComponentGroupStream*) cacheBytes;
+                var streams = (ComponentGroupStream*)cacheBytes;
                 for (var i = m_ComponentDataCount; i != m_ComponentDataCount + m_ComponentCount; i++)
                 {
-                    var component = m_ChunkIterator.GetManagedObject(m_ArchetypeManager,
-                        streams[i].TypeIndexInArchetype, CacheBeginIndex, index);
+#if UNITY_WSA
+#else
+                    var component = m_ChunkIterator.GetManagedObject(m_ArchetypeManager, streams[i].TypeIndexInArchetype, CacheBeginIndex, index);
                     var valuePtrOffsetted = valuePtr + streams[i].FieldOffset;
                     UnsafeUtility.CopyObjectAddressToPtr(component, valuePtrOffsetted);
+#endif
                 }
             }
         }
@@ -350,7 +356,7 @@ namespace Unity.Entities
                     m_Data.UpdateCache(index);
 
                 var value = default(T);
-                var valuePtr = (byte*) UnsafeUtility.AddressOf(ref value);
+                var valuePtr = (byte*)UnsafeUtility.AddressOf(ref value);
                 m_Data.PatchPtrs(index, valuePtr);
                 m_Data.PatchManagedPtrs(index, valuePtr);
                 return value;
@@ -410,7 +416,7 @@ namespace Unity.Entities
 #endif
 
                     var value = default(U);
-                    var valuePtr = (byte*) UnsafeUtility.AddressOf(ref value);
+                    var valuePtr = (byte*)UnsafeUtility.AddressOf(ref value);
                     m_Data.PatchPtrs(m_Index, valuePtr);
                     m_Data.PatchManagedPtrs(m_Index, valuePtr);
                     return value;

@@ -1,4 +1,4 @@
-﻿#if (NET_4_6 || NET_STANDARD_2_0)
+﻿#if (NET_4_6 || NET_STANDARD_2_0 || UNITY_WSA)
 
 using System;
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ namespace Unity.Properties.Codegen.CSharp
         {
             var writer = new CodeWriter(CodeStyle.CSharp);
 
-            writer.Line("#if (NET_4_6 || NET_STANDARD_2_0)");
+            writer.Line("#if (NET_4_6 || NET_STANDARD_2_0 || UNITY_WSA)");
 
             var usings = new List<string>
             {

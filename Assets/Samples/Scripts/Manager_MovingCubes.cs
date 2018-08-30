@@ -10,6 +10,8 @@ sealed class Manager_MovingCubes : MonoBehaviour
 {
     [SerializeField] Mesh cube;
     [SerializeField] Material cubeMaterial;
+    [SerializeField] Texture2D cubeSurfaceTexture;
+
 
     void Start()
     {
@@ -20,7 +22,11 @@ sealed class Manager_MovingCubes : MonoBehaviour
         World.Active.CreateManager(typeof(ClickSpawnCube), new MeshInstanceRenderer
         {
             castShadows = ShadowCastingMode.On,
-            material = new Material(cubeMaterial) { enableInstancing = true, },
+            material = this.cubeMaterial = new Material(cubeMaterial)
+            {
+                enableInstancing = true,
+                mainTexture = cubeSurfaceTexture
+            },
             mesh = cube,
             receiveShadows = true,
             subMesh = 0,

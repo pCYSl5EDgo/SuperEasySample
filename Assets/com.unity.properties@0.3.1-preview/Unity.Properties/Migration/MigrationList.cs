@@ -1,4 +1,4 @@
-#if (NET_4_6 || NET_STANDARD_2_0)
+#if (NET_4_6 || NET_STANDARD_2_0 || UNITY_WSA)
 
 using System.Collections;
 using System.Collections.Generic;

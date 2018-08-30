@@ -262,3 +262,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cube: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   cubeMaterial: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  cubeSurfaceTexture: {fileID: 2800000, guid: dffef66376be4fa480fb02b19edbe903, type: 3}
+  prefabCube: {fileID: 1067822411151590, guid: 1092fff3e9b2b854fa3e14d072c0cb8c, type: 2}

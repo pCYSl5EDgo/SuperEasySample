@@ -256,7 +256,11 @@ namespace Unity.Entities
 
 #if UNITY_ASSERTIONS
             // Buffer should be 16 byte aligned to ensure component data layout itself can gurantee being aligned
+#if UNITY_WSA
+            var offset = System.Runtime.InteropServices.Marshal.OffsetOf<Chunk>("Buffer").ToInt32();
+#else
             var offset = UnsafeUtility.GetFieldOffset(typeof(Chunk).GetField("Buffer"));
+#endif
             Assert.IsTrue(offset % 16 == 0, "Chunk buffer must be 16 byte aligned");
 #endif
         }

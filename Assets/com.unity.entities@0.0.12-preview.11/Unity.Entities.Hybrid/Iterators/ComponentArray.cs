@@ -111,7 +111,11 @@ namespace Unity.Entities
                 IsReadOnly = false /* isReadOnly */,
                 AccessMode = accessMode,
                 IndexInComponentGroup = -1,
+#if UNITY_WSA
+                FieldOffset = System.Runtime.InteropServices.Marshal.OffsetOf(field.DeclaringType, field.Name).ToInt32(),
+#else
                 FieldOffset = UnsafeUtility.GetFieldOffset(field),
+#endif
                 ComponentType = new ComponentType(componentType, accessMode),
                 ComponentRequirements = componentType == typeof(Transform)
                     ? new[] { typeof(Transform), componentType }

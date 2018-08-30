@@ -21,7 +21,7 @@ namespace Unity.Entities
             CreateLayoutRecurse(type, 0, layouts, ref begin, ref end, ref hash);
 
             if (begin != end)
-                layouts.Add(new Layout {offset = begin, count = end - begin, Aligned4 = false});
+                layouts.Add(new Layout { offset = begin, count = end - begin, Aligned4 = false });
 
             var layoutsArray = layouts.ToArray();
 
@@ -94,7 +94,11 @@ namespace Unity.Entities
             var fieldsWithOffset = new FieldData[fields.Length];
             for (int i = 0; i != fields.Length; i++)
             {
+#if UNITY_WSA
+                fieldsWithOffset[i].Offset = System.Runtime.InteropServices.Marshal.OffsetOf(type, fields[i].Name).ToInt32();
+#else
                 fieldsWithOffset[i].Offset = UnsafeUtility.GetFieldOffset(fields[i]);
+#endif
                 fieldsWithOffset[i].Field = fields[i];
             }
 
@@ -132,7 +136,7 @@ namespace Unity.Entities
 
                     if (end != offset)
                     {
-                        layouts.Add(new Layout {offset = begin, count = end - begin, Aligned4 = false});
+                        layouts.Add(new Layout { offset = begin, count = end - begin, Aligned4 = false });
                         begin = offset;
                         end = offset + sizeOf;
                     }
@@ -165,13 +169,13 @@ namespace Unity.Entities
         public static unsafe int GetHashCode(void* dataPtr, TypeInfo typeInfo)
         {
             var layout = typeInfo.Layouts;
-            var data = (byte*) dataPtr;
+            var data = (byte*)dataPtr;
             uint hash = 0;
 
             for (var k = 0; k != layout.Length; k++)
                 if (layout[k].Aligned4)
                 {
-                    var dataInt = (uint*) (data + layout[k].offset);
+                    var dataInt = (uint*)(data + layout[k].offset);
                     var count = layout[k].count;
                     for (var i = 0; i != count; i++)
                     {
@@ -190,7 +194,7 @@ namespace Unity.Entities
                     }
                 }
 
-            return (int) hash;
+            return (int)hash;
         }
 
         public static unsafe bool Equals<T>(T lhs, T rhs, TypeInfo typeInfo) where T : struct
@@ -206,8 +210,8 @@ namespace Unity.Entities
         public static unsafe bool Equals(void* lhsPtr, void* rhsPtr, TypeInfo typeInfo)
         {
             var layout = typeInfo.Layouts;
-            var lhs = (byte*) lhsPtr;
-            var rhs = (byte*) rhsPtr;
+            var lhs = (byte*)lhsPtr;
+            var rhs = (byte*)rhsPtr;
 
             var same = true;
 
@@ -215,8 +219,8 @@ namespace Unity.Entities
                 if (layout[k].Aligned4)
                 {
                     var offset = layout[k].offset;
-                    var lhsInt = (uint*) (lhs + offset);
-                    var rhsInt = (uint*) (rhs + offset);
+                    var lhsInt = (uint*)(lhs + offset);
+                    var rhsInt = (uint*)(rhs + offset);
                     var count = layout[k].count;
                     for (var i = 0; i != count; i++)
                         same &= lhsInt[i] == rhsInt[i];

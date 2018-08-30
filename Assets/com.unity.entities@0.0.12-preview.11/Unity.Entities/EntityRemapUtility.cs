@@ -68,7 +68,11 @@ namespace Unity.Entities
                 foreach (var field in fields)
                 {
                     if (field.FieldType.IsValueType && !field.FieldType.IsPrimitive)
+#if UNITY_WSA
+                        CalculateEntityOffsetsRecurse(ref offsets, field.FieldType, baseOffset + System.Runtime.InteropServices.Marshal.OffsetOf(type, field.Name).ToInt32());
+#else
                         CalculateEntityOffsetsRecurse(ref offsets, field.FieldType, baseOffset + UnsafeUtility.GetFieldOffset(field));
+#endif
                 }
             }
         }

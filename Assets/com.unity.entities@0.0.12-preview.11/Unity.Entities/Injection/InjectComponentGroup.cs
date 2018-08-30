@@ -55,28 +55,33 @@ namespace Unity.Entities
 
             injectionContext.PrepareEntries(m_EntityGroup);
 
-            if (entityArrayInjection != null)
-                m_EntityArrayOffset = UnsafeUtility.GetFieldOffset(entityArrayInjection);
-            else
-                m_EntityArrayOffset = -1;
-
-            if (lengthInjection != null)
-                m_LengthOffset = UnsafeUtility.GetFieldOffset(lengthInjection);
-            else
-                m_LengthOffset = -1;
-
+            m_EntityArrayOffset = entityArrayInjection == null ? -1 :
+#if UNITY_WSA
+            System.Runtime.InteropServices.Marshal.OffsetOf(entityArrayInjection.DeclaringType, entityArrayInjection.Name).ToInt32();
+            m_LengthOffset = lengthInjection == null ? -1 :
+            System.Runtime.InteropServices.Marshal.OffsetOf(lengthInjection.DeclaringType, lengthInjection.Name).ToInt32();
+            m_GroupFieldOffset = System.Runtime.InteropServices.Marshal.OffsetOf(groupField.DeclaringType, groupField.Name).ToInt32();
+#else
+            UnsafeUtility.GetFieldOffset(entityArrayInjection);
+            m_LengthOffset = lengthInjection == null ? -1 :
+            UnsafeUtility.GetFieldOffset(lengthInjection);
             m_GroupFieldOffset = UnsafeUtility.GetFieldOffset(groupField);
+#endif
 
             if (componentGroupIndexField != null)
             {
-                ulong gchandle;
-                var pinnedSystemPtr = (byte*)UnsafeUtility.PinGCObjectAndGetAddress(system, out gchandle);
-                var groupIndexPtr = pinnedSystemPtr + m_GroupFieldOffset + UnsafeUtility.GetFieldOffset(componentGroupIndexField);
-
                 int groupIndex = m_ComponentGroupIndex;
+#if UNITY_WSA
+                var pinnedSystemPtr = System.Runtime.InteropServices.Marshal.AllocHGlobal(System.Runtime.InteropServices.Marshal.SizeOf(system));
+                var groupIndexPtr = pinnedSystemPtr + m_GroupFieldOffset + System.Runtime.InteropServices.Marshal.OffsetOf(componentGroupIndexField.DeclaringType, componentGroupIndexField.Name).ToInt32();
+                System.Runtime.InteropServices.Marshal.StructureToPtr(groupIndex, groupIndexPtr, false);
+                System.Runtime.InteropServices.Marshal.FreeHGlobal(pinnedSystemPtr);
+#else
+                var pinnedSystemPtr = (byte*)UnsafeUtility.PinGCObjectAndGetAddress(system, out var gchandle);
+                var groupIndexPtr = pinnedSystemPtr + m_GroupFieldOffset + UnsafeUtility.GetFieldOffset(componentGroupIndexField);
                 UnsafeUtility.CopyStructureToPtr(ref groupIndex, groupIndexPtr);
-
                 UnsafeUtility.ReleaseGCObject(gchandle);
+#endif
             }
         }
 
@@ -227,7 +232,7 @@ namespace Unity.Entities
                         return
                             $"{system.GetType().Name}:{groupField.Name} {field.Name} must use the \"readonly\" keyword";
 
-                    if(field.Name == "Length")
+                    if (field.Name == "Length")
                         lengthField = field;
 
                     if (field.Name == "GroupIndex")

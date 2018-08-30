@@ -46,7 +46,11 @@ namespace Unity.Entities.Properties
 
         public int GetOffset()
         {
+#if UNITY_WSA
+            return System.Runtime.InteropServices.Marshal.OffsetOf(Info.DeclaringType, Info.Name).ToInt32();
+#else
             return UnsafeUtility.GetFieldOffset(Info);
+#endif
         }
 
         public string Name
