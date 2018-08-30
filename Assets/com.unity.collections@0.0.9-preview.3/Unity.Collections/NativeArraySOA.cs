@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.Collections.Experimental
@@ -66,8 +67,11 @@ namespace Unity.Collections.Experimental
 
             foreach (var field in fields)
             {
+#if UNITY_WSA
+                int offset = parentOffset + Marshal.OffsetOf(type, field.Name).ToInt32();
+#else
                 int offset = parentOffset + UnsafeUtility.GetFieldOffset(field);
-
+#endif
                 if (field.FieldType.IsPrimitive || field.FieldType.IsPointer)
                 {
                     int sizeOf = -1;
@@ -102,13 +106,13 @@ namespace Unity.Collections.Experimental
         private static StructLayoutData4 ms_CachedLayout;
 
         private byte* m_Base;
-        private int   m_Length;
+        private int m_Length;
         private Allocator m_Allocator;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-		internal AtomicSafetyHandle 	m_Safety;
-		[NativeSetClassTypeToNullOnSchedule]
-		DisposeSentinel					m_DisposeSentinel;
+        internal AtomicSafetyHandle m_Safety;
+        [NativeSetClassTypeToNullOnSchedule]
+        DisposeSentinel m_DisposeSentinel;
 #endif
 
         public int Length => m_Length;
@@ -136,7 +140,7 @@ namespace Unity.Collections.Experimental
 
         public NativeArrayChunked8(int length, Allocator label)
             : this(length, label, 1)
-        {}
+        { }
 
         public NativeArrayChunked8(int length, Allocator label, int stackDepth)
         {
@@ -151,7 +155,7 @@ namespace Unity.Collections.Experimental
                 ms_CachedLayout = new StructLayoutData4(typeof(T));
             }
 
-            m_Base = (byte*) UnsafeUtility.Malloc(StructLayoutData4.ChunkSizeBytes * ms_CachedLayout.ChunksNeeded(length) * ms_CachedLayout.FieldCount, StructLayoutData4.ChunkSizeBytes, label);
+            m_Base = (byte*)UnsafeUtility.Malloc(StructLayoutData4.ChunkSizeBytes * ms_CachedLayout.ChunksNeeded(length) * ms_CachedLayout.FieldCount, StructLayoutData4.ChunkSizeBytes, label);
             m_Length = length;
             m_Allocator = label;
 
@@ -166,13 +170,13 @@ namespace Unity.Collections.Experimental
 
         public void Dispose()
         {
-			#if ENABLE_UNITY_COLLECTIONS_CHECKS
-			#if UNITY_2018_3_OR_NEWER
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+#if UNITY_2018_3_OR_NEWER
             DisposeSentinel.Dispose(ref m_Safety, ref m_DisposeSentinel);
-			#else
+#else
             DisposeSentinel.Dispose(m_Safety, ref m_DisposeSentinel);
-			#endif
-			#endif
+#endif
+#endif
 
             if (m_Base != null)
             {
@@ -180,7 +184,7 @@ namespace Unity.Collections.Experimental
             }
         }
 
-        public T this [int index]
+        public T this[int index]
         {
             get
             {
@@ -193,8 +197,8 @@ namespace Unity.Collections.Experimental
 
                 int fieldCount = ms_CachedLayout.FieldCount;
 
-                uint* bp = (uint*) (m_Base + StructLayoutData4.ChunkSizeBytes * ms_CachedLayout.FieldCount * chunkIndex + StructLayoutData4.ElementSize * chunkOffset);
-                uint* target = (uint*) UnsafeUtility.AddressOf(ref result);
+                uint* bp = (uint*)(m_Base + StructLayoutData4.ChunkSizeBytes * ms_CachedLayout.FieldCount * chunkIndex + StructLayoutData4.ElementSize * chunkOffset);
+                uint* target = (uint*)UnsafeUtility.AddressOf(ref result);
 
                 for (int field = 0; field < fieldCount; ++field)
                 {
@@ -215,8 +219,8 @@ namespace Unity.Collections.Experimental
 
                 int fieldCount = ms_CachedLayout.FieldCount;
 
-                uint* bp = (uint*) UnsafeUtility.AddressOf(ref value);
-                uint* target = (uint*) (m_Base + StructLayoutData4.ChunkSizeBytes * ms_CachedLayout.FieldCount * chunkIndex + StructLayoutData4.ElementSize * chunkOffset);
+                uint* bp = (uint*)UnsafeUtility.AddressOf(ref value);
+                uint* target = (uint*)(m_Base + StructLayoutData4.ChunkSizeBytes * ms_CachedLayout.FieldCount * chunkIndex + StructLayoutData4.ElementSize * chunkOffset);
 
                 for (int field = 0; field < fieldCount; ++field)
                 {
@@ -233,13 +237,13 @@ namespace Unity.Collections.Experimental
         private static StructLayoutData4 ms_CachedLayout;
 
         private byte* m_Base;
-        private int   m_Length;
+        private int m_Length;
         private Allocator m_Allocator;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-		internal AtomicSafetyHandle 	m_Safety;
-		[NativeSetClassTypeToNullOnSchedule]
-		DisposeSentinel					m_DisposeSentinel;
+        internal AtomicSafetyHandle m_Safety;
+        [NativeSetClassTypeToNullOnSchedule]
+        DisposeSentinel m_DisposeSentinel;
 #endif
 
         public int Length => m_Length;
@@ -267,7 +271,7 @@ namespace Unity.Collections.Experimental
 
         public NativeArrayFullSOA(int length, Allocator label)
             : this(length, label, 1)
-        {}
+        { }
 
         public NativeArrayFullSOA(int length, Allocator label, int stackDepth)
         {
@@ -282,7 +286,7 @@ namespace Unity.Collections.Experimental
                 ms_CachedLayout = new StructLayoutData4(typeof(T));
             }
 
-            m_Base = (byte*) UnsafeUtility.Malloc(4 * length * ms_CachedLayout.FieldCount, StructLayoutData4.ChunkSizeBytes, label);
+            m_Base = (byte*)UnsafeUtility.Malloc(4 * length * ms_CachedLayout.FieldCount, StructLayoutData4.ChunkSizeBytes, label);
             m_Length = length;
             m_Allocator = label;
 
@@ -297,13 +301,13 @@ namespace Unity.Collections.Experimental
 
         public void Dispose()
         {
-			#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            #if UNITY_2018_3_OR_NEWER
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+#if UNITY_2018_3_OR_NEWER
             DisposeSentinel.Dispose(ref m_Safety, ref m_DisposeSentinel);
-            #else
+#else
             DisposeSentinel.Dispose(m_Safety, ref m_DisposeSentinel);
-            #endif
-			#endif
+#endif
+#endif
 
             if (m_Base != null)
             {
@@ -311,19 +315,19 @@ namespace Unity.Collections.Experimental
             }
         }
 
-        public T this [int index]
+        public T this[int index]
         {
             get
             {
                 CheckReadAccess(index);
 
                 T result = default(T);
-                uint* target = (uint*) UnsafeUtility.AddressOf(ref result);
+                uint* target = (uint*)UnsafeUtility.AddressOf(ref result);
 
                 int fieldCount = ms_CachedLayout.FieldCount;
                 int stride = m_Length;
 
-                uint* bp = (uint*) (m_Base + 4 * index);
+                uint* bp = (uint*)(m_Base + 4 * index);
                 for (int field = 0; field < fieldCount; ++field)
                 {
                     var fieldInfo = ms_CachedLayout.GetFieldInfo(field);
