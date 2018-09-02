@@ -574,7 +574,7 @@ PlayerSettings:
   platformArchitecture: {}
   scriptingBackend:
     Metro: 1
-    Standalone: 0
+    Standalone: 1
   il2cppCompilerConfiguration: {}
   incrementalIl2cppBuild: {}
   allowUnsafeCode: 1

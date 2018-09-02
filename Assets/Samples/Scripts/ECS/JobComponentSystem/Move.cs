@@ -11,7 +11,6 @@ using UnityEngine;
 public class MoveSystem : JobComponentSystem
 {
     [BurstCompile]
-    [RequireComponentTag(typeof(MeshInstanceRenderer))]
     struct Job : IJobProcessComponentData<Position, Velocity>
     {
         public float deltaTime;

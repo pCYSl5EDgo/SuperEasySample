@@ -10,15 +10,15 @@ namespace Unity.Rendering
     /// Specified by TransformMatrix associated with Entity.
     /// </summary>
     [Serializable]
-	public struct MeshInstanceRenderer : ISharedComponentData
-	{
-        public Mesh                 mesh;
-        public Material             material;
-	    public int                  subMesh;
+    public struct MeshInstanceRenderer : Unity.Entities.ISharedComponentData
+    {
+        public UnityEngine.Mesh mesh;
+        public UnityEngine.Material material;
+        public int subMesh;
 
-        public ShadowCastingMode    castShadows;
-        public bool                 receiveShadows;
-	}
+        public UnityEngine.Rendering.ShadowCastingMode castShadows;
+        public bool receiveShadows;
+    }
 
-	public class MeshInstanceRendererComponent : SharedComponentDataWrapper<MeshInstanceRenderer> { }
+    public class MeshInstanceRendererComponent : SharedComponentDataWrapper<MeshInstanceRenderer> { }
 }

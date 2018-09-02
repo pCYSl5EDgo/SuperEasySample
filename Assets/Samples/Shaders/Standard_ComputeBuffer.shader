@@ -86,188 +86,188 @@ Shader "Custom/Standard"
             // Uncomment the following line to enable dithering LOD crossfade. Note: there are more in the file to uncomment for other passes.
             //#pragma multi_compile _ LOD_FADE_CROSSFADE
 
-            #pragma vertex vertBase
+            #pragma vertex vert
             #pragma fragment fragBase
             #include "UnityStandardCoreForward.cginc"
 
             StructuredBuffer<float4x4> _TransformMatrixBuffer;
 
             VertexOutputForwardBase vert(VertexInput v, uint id : SV_INSTANCEID)
-            { 
-                v.vertex = mul(_TransformMatrixBuffer[id], v.vertex);
+            {
+                v.vertex.xyz = mul(_TransformMatrixBuffer[id], float4(v.vertex.xyz, 1)).xyz;
                 return vertBase(v);
             }
             ENDCG
         }
         // ------------------------------------------------------------------
         //  Additive forward pass (one light per pass)
-        Pass
-        {
-            Name "FORWARD_DELTA"
-            Tags { "LightMode" = "ForwardAdd" }
-            Blend [_SrcBlend] One
-            Fog { Color (0,0,0,0) } // in additive pass fog should be black
-            ZWrite Off
-            ZTest LEqual
+        // Pass
+        // {
+        //     Name "FORWARD_DELTA"
+        //     Tags { "LightMode" = "ForwardAdd" }
+        //     Blend [_SrcBlend] One
+        //     Fog { Color (0,0,0,0) } // in additive pass fog should be black
+        //     ZWrite Off
+        //     ZTest LEqual
 
-            CGPROGRAM
-            #pragma target 5.0
+        //     CGPROGRAM
+        //     #pragma target 5.0
 
-            // -------------------------------------
+        //     // -------------------------------------
 
 
-            #pragma shader_feature _NORMALMAP
-            #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
-            #pragma shader_feature _METALLICGLOSSMAP
-            #pragma shader_feature _ _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-            #pragma shader_feature _ _SPECULARHIGHLIGHTS_OFF
-            #pragma shader_feature ___ _DETAIL_MULX2
-            #pragma shader_feature _PARALLAXMAP
+        //     #pragma shader_feature _NORMALMAP
+        //     #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
+        //     #pragma shader_feature _METALLICGLOSSMAP
+        //     #pragma shader_feature _ _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        //     #pragma shader_feature _ _SPECULARHIGHLIGHTS_OFF
+        //     #pragma shader_feature ___ _DETAIL_MULX2
+        //     #pragma shader_feature _PARALLAXMAP
 
-            #pragma multi_compile_fwdadd_fullshadows
-            #pragma multi_compile_fog
-            // Uncomment the following line to enable dithering LOD crossfade. Note: there are more in the file to uncomment for other passes.
-            //#pragma multi_compile _ LOD_FADE_CROSSFADE
+        //     #pragma multi_compile_fwdadd_fullshadows
+        //     #pragma multi_compile_fog
+        //     // Uncomment the following line to enable dithering LOD crossfade. Note: there are more in the file to uncomment for other passes.
+        //     //#pragma multi_compile _ LOD_FADE_CROSSFADE
 
-            #pragma vertex vert
-            #pragma fragment fragAdd
-            #include "UnityStandardCoreForward.cginc"
+        //     #pragma vertex vert
+        //     #pragma fragment fragAdd
+        //     #include "UnityStandardCoreForward.cginc"
 
-            StructuredBuffer<float4x4> _TransformMatrixBuffer;
+        //     StructuredBuffer<float4x4> _TransformMatrixBuffer;
 
-            VertexOutputForwardAdd vert(VertexInput v, uint id : SV_INSTANCEID)
-            {
-                v.vertex = mul(_TransformMatrixBuffer[id], v.vertex);
-                return vertForwardAdd(v);
-            }
-            ENDCG
-        }
+        //     VertexOutputForwardAdd vert(VertexInput v, uint id : SV_INSTANCEID)
+        //     {
+        //         v.vertex = mul(_TransformMatrixBuffer[id], v.vertex);
+        //         return vertForwardAdd(v);
+        //     }
+        //     ENDCG
+        // }
         // ------------------------------------------------------------------
         //  Shadow rendering pass
-        Pass {
-            Name "ShadowCaster"
-            Tags { "LightMode" = "ShadowCaster" }
+//         Pass {
+//             Name "ShadowCaster"
+//             Tags { "LightMode" = "ShadowCaster" }
 
-            ZWrite On ZTest LEqual
+//             ZWrite On ZTest LEqual
 
-            CGPROGRAM
-            #pragma target 5.0
+//             CGPROGRAM
+//             #pragma target 5.0
 
-            // -------------------------------------
+//             // -------------------------------------
 
 
-            #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
-            #pragma shader_feature _METALLICGLOSSMAP
-            #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-            #pragma shader_feature _PARALLAXMAP
-            #pragma multi_compile_shadowcaster
-            #pragma multi_compile_instancing
-            // Uncomment the following line to enable dithering LOD crossfade. Note: there are more in the file to uncomment for other passes.
-            //#pragma multi_compile _ LOD_FADE_CROSSFADE
+//             #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
+//             #pragma shader_feature _METALLICGLOSSMAP
+//             #pragma shader_feature _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+//             #pragma shader_feature _PARALLAXMAP
+//             #pragma multi_compile_shadowcaster
+//             #pragma multi_compile_instancing
+//             // Uncomment the following line to enable dithering LOD crossfade. Note: there are more in the file to uncomment for other passes.
+//             //#pragma multi_compile _ LOD_FADE_CROSSFADE
 
-            #pragma vertex vertShadowCaster
-            #pragma fragment fragShadowCaster
+//             #pragma vertex vertShadowCaster
+//             #pragma fragment fragShadowCaster
 
-            #include "UnityStandardShadow.cginc"
+//             #include "UnityStandardShadow.cginc"
 
-            StructuredBuffer<float4x4> _TransformMatrixBuffer;
+//             StructuredBuffer<float4x4> _TransformMatrixBuffer;
 
-            void vert(VertexInput v, out float4 opos : SV_POSITION, uint id : SV_INSTANCEID
-#ifdef UNITY_STANDARD_USE_SHADOW_OUTPUT_STRUCT
-    , out VertexOutputShadowCaster o
-#endif
-#ifdef UNITY_STANDARD_USE_STEREO_SHADOW_OUTPUT_STRUCT
-    , out VertexOutputStereoShadowCaster os
-#endif
-)
-            {
-                v.vertex = mul(_TransformMatrixBuffer[id], v.vertex);
-                vertShadowCaster(v, opos
-#ifdef UNITY_STANDARD_USE_SHADOW_OUTPUT_STRUCT
-                , o
-#endif
-#ifdef UNITY_STANDARD_USE_STEREO_SHADOW_OUTPUT_STRUCT
-                , os
-#endif          
-                );
-            }
+//             void vert(VertexInput v, out float4 opos : SV_POSITION, uint id : SV_INSTANCEID
+// #ifdef UNITY_STANDARD_USE_SHADOW_OUTPUT_STRUCT
+//     , out VertexOutputShadowCaster o
+// #endif
+// #ifdef UNITY_STANDARD_USE_STEREO_SHADOW_OUTPUT_STRUCT
+//     , out VertexOutputStereoShadowCaster os
+// #endif
+// )
+//             {
+//                 v.vertex = mul(_TransformMatrixBuffer[id], v.vertex);
+//                 vertShadowCaster(v, opos
+// #ifdef UNITY_STANDARD_USE_SHADOW_OUTPUT_STRUCT
+//                 , o
+// #endif
+// #ifdef UNITY_STANDARD_USE_STEREO_SHADOW_OUTPUT_STRUCT
+//                 , os
+// #endif          
+//                 );
+//             }
 
-            ENDCG
-        }
+//             ENDCG
+//         }
         // ------------------------------------------------------------------
         //  Deferred pass
-        Pass
-        {
-            Name "DEFERRED"
-            Tags { "LightMode" = "Deferred" }
+        // Pass
+        // {
+        //     Name "DEFERRED"
+        //     Tags { "LightMode" = "Deferred" }
 
-            CGPROGRAM
-            #pragma target 5.0
-            #pragma exclude_renderers nomrt
+        //     CGPROGRAM
+        //     #pragma target 5.0
+        //     #pragma exclude_renderers nomrt
 
 
-            // -------------------------------------
+        //     // -------------------------------------
 
-            #pragma shader_feature _NORMALMAP
-            #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
-            #pragma shader_feature _EMISSION
-            #pragma shader_feature _METALLICGLOSSMAP
-            #pragma shader_feature _ _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-            #pragma shader_feature _ _SPECULARHIGHLIGHTS_OFF
-            #pragma shader_feature ___ _DETAIL_MULX2
-            #pragma shader_feature _PARALLAXMAP
+        //     #pragma shader_feature _NORMALMAP
+        //     #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
+        //     #pragma shader_feature _EMISSION
+        //     #pragma shader_feature _METALLICGLOSSMAP
+        //     #pragma shader_feature _ _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        //     #pragma shader_feature _ _SPECULARHIGHLIGHTS_OFF
+        //     #pragma shader_feature ___ _DETAIL_MULX2
+        //     #pragma shader_feature _PARALLAXMAP
 
-            #pragma multi_compile_prepassfinal
-            #pragma multi_compile_instancing
-            // Uncomment the following line to enable dithering LOD crossfade. Note: there are more in the file to uncomment for other passes.
-            //#pragma multi_compile _ LOD_FADE_CROSSFADE
+        //     #pragma multi_compile_prepassfinal
+        //     #pragma multi_compile_instancing
+        //     // Uncomment the following line to enable dithering LOD crossfade. Note: there are more in the file to uncomment for other passes.
+        //     //#pragma multi_compile _ LOD_FADE_CROSSFADE
 
-            #pragma vertex vert
-            #pragma fragment fragDeferred
+        //     #pragma vertex vert
+        //     #pragma fragment fragDeferred
 
-            #include "UnityStandardCore.cginc"
+        //     #include "UnityStandardCore.cginc"
 
-            StructuredBuffer<float4x4> _TransformMatrixBuffer;
-            VertexOutputDeferred vert (VertexInput v, uint id : SV_INSTANCEID)
-            {
-                v.vertex = mul(_TransformMatrixBuffer[id], v.vertex);
-                return vertDeferred(v);
-            }
-            ENDCG
-        }
+        //     StructuredBuffer<float4x4> _TransformMatrixBuffer;
+        //     VertexOutputDeferred vert (VertexInput v, uint id : SV_INSTANCEID)
+        //     {
+        //         v.vertex = mul(_TransformMatrixBuffer[id], v.vertex);
+        //         return vertDeferred(v);
+        //     }
+        //     ENDCG
+        // }
 
         // ------------------------------------------------------------------
         // Extracts information for lightmapping, GI (emission, albedo, ...)
         // This pass it not used during regular rendering.
-        Pass
-        {
-            Name "META"
-            Tags { "LightMode"="Meta" }
+        // Pass
+        // {
+        //     Name "META"
+        //     Tags { "LightMode"="Meta" }
 
-            Cull Off
+        //     Cull Off
 
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag_meta
+        //     CGPROGRAM
+        //     #pragma vertex vert
+        //     #pragma fragment frag_meta
 
-            #pragma shader_feature _EMISSION
-            #pragma shader_feature _METALLICGLOSSMAP
-            #pragma shader_feature _ _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-            #pragma shader_feature ___ _DETAIL_MULX2
-            #pragma shader_feature EDITOR_VISUALIZATION
+        //     #pragma shader_feature _EMISSION
+        //     #pragma shader_feature _METALLICGLOSSMAP
+        //     #pragma shader_feature _ _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        //     #pragma shader_feature ___ _DETAIL_MULX2
+        //     #pragma shader_feature EDITOR_VISUALIZATION
 
-            #include "UnityStandardMeta.cginc"
+        //     #include "UnityStandardMeta.cginc"
 
-            StructuredBuffer<float4x4> _TransformMatrixBuffer;
-            v2f_meta vert (VertexInput v, uint id : SV_INSTANCEID)
-            {
-                v.vertex = mul(_TransformMatrixBuffer[id], v.vertex);
-                return vert_meta(v);
-            }
-            ENDCG
-        }
+        //     StructuredBuffer<float4x4> _TransformMatrixBuffer;
+        //     v2f_meta vert (VertexInput v, uint id : SV_INSTANCEID)
+        //     {
+        //         v.vertex = mul(_TransformMatrixBuffer[id], v.vertex);
+        //         return vert_meta(v);
+        //     }
+        //     ENDCG
+        // }
     }
 
-    FallBack "VertexLit"
+    // FallBack "VertexLit"
     CustomEditor "StandardShaderGUI"
 }

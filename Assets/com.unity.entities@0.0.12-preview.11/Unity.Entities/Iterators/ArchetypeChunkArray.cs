@@ -63,7 +63,7 @@ namespace Unity.Entities
             return result;
         }
 
-        public uint GetComponentVersion<T>(ArchetypeChunkComponentType<T> chunkComponentType)
+        public uint GetComponentVersion<T>(in ArchetypeChunkComponentType<T> chunkComponentType)
             where T : struct, IComponentData
         {
             var typeIndexInArchetype = ChunkDataUtility.GetIndexInTypeArray(m_Chunk->Archetype, chunkComponentType.m_TypeIndex);
@@ -71,7 +71,7 @@ namespace Unity.Entities
             return m_Chunk->ChangeVersion[typeIndexInArchetype];
         }
 
-        public int GetSharedComponentIndex<T>(ArchetypeChunkSharedComponentType<T> chunkSharedComponentData)
+        public int GetSharedComponentIndex<T>(in ArchetypeChunkSharedComponentType<T> chunkSharedComponentData)
             where T : struct, ISharedComponentData
         {
             var archetype = m_Chunk->Archetype;

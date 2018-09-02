@@ -1,11 +1,128 @@
-﻿#pragma kernel CSMain
+﻿#pragma kernel _Position
+#pragma kernel _Scale
+#pragma kernel _Position_Scale
+#pragma kernel _Rotation
+#pragma kernel _Position_Rotation
+#pragma kernel _Scale_Rotation
+#pragma kernel _Position_Scale_Rotation
+
+#define _COUNT_ 1024
 
 StructuredBuffer<float3> _PositionBuffer;
+StructuredBuffer<float3> _ScaleBuffer;
+StructuredBuffer<float4> _QuaternionBuffer;
 RWStructuredBuffer<float4x4> _ResultBuffer;
 
-[numthreads(512,1,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+[numthreads(_COUNT_,1,1)]
+void _Position (uint3 id : SV_DispatchThreadID)
 {
-	const uint index = id.x;
-	_ResultBuffer[index] = float4x4(float4(1, 0, 0, 0), float4(0, 1, 0, 0), float4(0, 0, 1, 0), float4(_PositionBuffer[index], 1));
+	const unsigned int index = id.x;
+	const float3 pos = _PositionBuffer[index];
+	_ResultBuffer[index] = float4x4(float4(1, 0, 0, pos.x), float4(0, 1, 0, pos.y), float4(0, 0, 1, pos.z), float4(0, 0, 0, 1));
+}
+
+[numthreads(_COUNT_,1,1)]
+void _Scale(uint3 id : SV_DispatchThreadID)
+{
+	const unsigned int index = id.x;
+	const float3 scale = _ScaleBuffer[index];
+	_ResultBuffer[index] = float4x4(float4(scale.x, 0, 0, 0), float4(0, scale.y, 0, 0), float4(0, 0, scale.z, 0), float4(0, 0, 0, 1));
+}
+
+[numthreads(_COUNT_,1,1)]
+void _Rotation(uint3 id : SV_DispatchThreadID)
+{
+	const unsigned int index = id.x;
+	const float4 n = normalize(_QuaternionBuffer[id.x]);
+	const float3 n2 = n.xyz * 2;
+	const float3 __ = n.xyz * n2;
+	const float3 w = n.w * n2;
+	const float xy = n.x * n2.y;
+	const float xz = n.x * n2.z;
+	const float yz = n.y * n2.z;
+	_ResultBuffer[id.x] = float4x4(
+		float4(1 - (__.y + __.z), xy - w.z, xz + w.y, 0),
+		float4(xy + w.z, 1 - (__.x + __.z), yz - w.x, 0),
+		float4(xz - w.y, yz + w.x, 1 - (__.x + __.y), 0),
+		float4(0, 0, 0, 1));
+}
+
+[numthreads(_COUNT_,1,1)]
+void _Position_Rotation(uint3 id : SV_DispatchThreadID)
+{
+	const unsigned int index = id.x;
+	const float4 n = normalize(_QuaternionBuffer[index]);
+	const float3 pos = _PositionBuffer[index];
+	const float3 n2 = n.xyz * 2;
+	const float3 __ = n.xyz * n2;
+	const float3 w = n.w * n2;
+	const float xy = n.x * n2.y;
+	const float xz = n.x * n2.z;
+	const float yz = n.y * n2.z;
+	_ResultBuffer[index] = float4x4(
+		float4(1 - (__.y + __.z), xy - w.z, xz + w.y, pos.x),
+		float4(xy + w.z, 1 - (__.x + __.z), yz - w.x, pos.y),
+		float4(xz - w.y, yz + w.x, 1 - (__.x + __.y), pos.z),
+		float4(0, 0, 0, 1));
+}
+
+[numthreads(_COUNT_,1,1)]
+void _Position_Scale(uint3 id : SV_DispatchThreadID)
+{
+	const unsigned int index = id.x;
+	const float3 pos = _PositionBuffer[index];
+	const float3 scale = _ScaleBuffer[index];
+	_ResultBuffer[index] = float4x4(
+		float4(scale.x, 0, 0, pos.x),
+		float4(0, scale.y, 0, pos.y),
+		float4(0, 0, scale.z, pos.z),
+		float4(0, 0, 0, 1)
+	);
+}
+
+[numthreads(_COUNT_,1,1)]
+void _Scale_Rotation(uint3 id : SV_DispatchThreadID)
+{
+	const unsigned int index = id.x;
+	const float3 scale = _ScaleBuffer[index];
+	const float4 n = normalize(_QuaternionBuffer[index]);
+	const float3 n2 = n.xyz * 2;
+	const float3 __ = n.xyz * n2;
+	const float3 w = n.w * n2;
+	const float xy = n.x * n2.y;
+	const float xz = n.x * n2.z;
+	const float yz = n.y * n2.z;
+	const float3 r0 = float3(1 - (__.y + __.z), xy - w.z, xz + w.y);
+	const float3 r1 = float3(xy + w.z, 1 - (__.x + __.z), yz - w.x);
+	const float3 r2 = float3(xz - w.y, yz + w.x, 1 - (__.x + __.y));
+	_ResultBuffer[index] = float4x4(
+		float4(r0*scale, 0),
+		float4(r1*scale, 0),
+		float4(r2*scale, 0),
+		float4(0, 0, 0, 1)
+	);
+}
+
+[numthreads(_COUNT_,1,1)]
+void _Position_Scale_Rotation(uint3 id : SV_DispatchThreadID)
+{
+	const unsigned int index = id.x;
+	const float3 pos = _PositionBuffer[index];
+	const float3 scale = _ScaleBuffer[index];
+	const float4 n = normalize(_QuaternionBuffer[index]);
+	const float3 n2 = n.xyz * 2;
+	const float3 __ = n.xyz * n2;
+	const float3 w = n.w * n2;
+	const float xy = n.x * n2.y;
+	const float xz = n.x * n2.z;
+	const float yz = n.y * n2.z;
+	const float3 r0 = float3(1 - (__.y + __.z), xy - w.z, xz + w.y);
+	const float3 r1 = float3(xy + w.z, 1 - (__.x + __.z), yz - w.x);
+	const float3 r2 = float3(xz - w.y, yz + w.x, 1 - (__.x + __.y));
+	_ResultBuffer[index] = float4x4(
+		float4(r0*scale, pos.x),
+		float4(r1*scale, pos.y),
+		float4(r2*scale, pos.z),
+		float4(0, 0, 0, 1)
+	);
 }

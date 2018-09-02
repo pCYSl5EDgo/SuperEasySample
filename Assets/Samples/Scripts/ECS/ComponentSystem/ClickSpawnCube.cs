@@ -21,8 +21,13 @@ sealed class ClickSpawnCube : ComponentSystem
         {
             var e = EntityManager.CreateEntity(entityArchetype);
             EntityManager.SetSharedComponentData(e, cube);
-            EntityManager.SetComponentData(e, new Position { Value = new float3(UnityEngine.Random.value - 0.5f, UnityEngine.Random.value - 0.5f, UnityEngine.Random.value - 0.5f) * 10f });
-            EntityManager.SetComponentData(e, new Velocity(new float3(UnityEngine.Random.value - 0.5f, UnityEngine.Random.value - 0.5f, UnityEngine.Random.value - 0.5f) * 10f));
+            Set(e);
         }
+    }
+
+    private void Set(Entity e)
+    {
+        EntityManager.SetComponentData(e, new Position { Value = new float3(UnityEngine.Random.value - 0.5f, UnityEngine.Random.value - 0.5f, UnityEngine.Random.value - 0.5f) * 10f });
+        EntityManager.SetComponentData(e, new Velocity(new float3(UnityEngine.Random.value - 0.5f, UnityEngine.Random.value - 0.5f, UnityEngine.Random.value - 0.5f) * 10f));
     }
 }
