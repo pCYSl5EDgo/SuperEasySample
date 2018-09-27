@@ -14,7 +14,6 @@ sealed class Manager_MovingCubes : MonoBehaviour
     void Start()
     {
         World.Active = new World("move cube");
-        World.Active.SetDefaultCapacity(114514);
         manager = World.Active.CreateManager<EntityManager>();
         World.Active.CreateManager(typeof(EndFrameTransformSystem));
         World.Active.CreateManager<MeshInstanceRendererSystem>().ActiveCamera = GetComponent<Camera>();

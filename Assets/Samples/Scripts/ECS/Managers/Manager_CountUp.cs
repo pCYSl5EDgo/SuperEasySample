@@ -10,7 +10,6 @@ sealed class Manager_CountUp : MonoBehaviour
     void Start()
     {
         var world = World.Active = new World("count up");
-        world.SetDefaultCapacity(114514);
         world.CreateManager(typeof(CountUpSystem), countText);
         world.CreateManager(typeof(ClickSystem));
         ScriptBehaviourUpdateOrder.UpdatePlayerLoop(world);

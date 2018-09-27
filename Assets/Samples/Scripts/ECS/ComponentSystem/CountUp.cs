@@ -10,7 +10,7 @@ sealed class CountUpSystem : ComponentSystem
     uint cachedCount = 0;
     
     public CountUpSystem(TMP_Text countDownText) => this.countDownText = countDownText;
-    protected override void OnCreateManager(int capacity) => g = GetComponentGroup(ComponentType.ReadOnly<Count>());
+    protected override void OnCreateManager() => g = GetComponentGroup(ComponentType.ReadOnly<Count>());
 
     protected override void OnUpdate()
     {

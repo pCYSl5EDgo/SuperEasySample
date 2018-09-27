@@ -8,7 +8,7 @@ sealed class ClickSystem : ComponentSystem
 {
     EntityArchetype entityArchetype;
     ComponentGroup g;
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
         var componentTypes = new ComponentType[] { ComponentType.ReadOnly<Count>() };
         entityArchetype = EntityManager.CreateArchetype(componentTypes);

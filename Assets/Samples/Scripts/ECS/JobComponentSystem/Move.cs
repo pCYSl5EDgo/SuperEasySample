@@ -16,5 +16,5 @@ public class MoveSystem : JobComponentSystem
         public float deltaTime;
         public void Execute(ref Position position, [ReadOnly]ref Velocity velocity) => position.Value += deltaTime * velocity.Value;
     }
-    protected override JobHandle OnUpdate(JobHandle inputDeps) => new Job { deltaTime = Time.deltaTime }.Schedule(this, 256, inputDeps);
+    protected override JobHandle OnUpdate(JobHandle inputDeps) => new Job { deltaTime = Time.deltaTime }.Schedule(this, inputDeps);
 }

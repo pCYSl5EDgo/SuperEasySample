@@ -71,7 +71,7 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
 
     private int capacity;
 
-    protected override void OnCreateManager(int capacity) => this.capacity = GetPow2Container(capacity);
+    protected override void OnCreateManager() => this.capacity = GetPow2Container(1024);
 
     private static int GetPow2Container(int capacity)
     {

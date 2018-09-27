@@ -13,7 +13,7 @@ sealed class ClickSpawnCube : ComponentSystem
     EntityArchetype entityArchetype;
     MeshInstanceRenderer cube;
     public ClickSpawnCube(MeshInstanceRenderer cube) => this.cube = cube;
-    protected override void OnCreateManager(int capacity) => entityArchetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<MeshInstanceRenderer>(), ComponentType.Create<Position>(), ComponentType.Create<Velocity>());
+    protected override void OnCreateManager() => entityArchetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<MeshInstanceRenderer>(), ComponentType.Create<Position>(), ComponentType.Create<Velocity>());
 
     protected override void OnUpdate()
     {

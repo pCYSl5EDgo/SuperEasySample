@@ -16,7 +16,6 @@ public sealed class Manager_MovingSpheres : MonoBehaviour
     {
         mainCamera = GetComponent<Camera>();
         var world = World.Active = new World("DrawMeshInstancedIncirect");
-        world.SetDefaultCapacity(114514);
         manager = world.CreateManager<EntityManager>();
         world.CreateManager(typeof(MeshInstanceRendererInstancedIndirectSystem), mainCamera, renderers, shader);
         world.CreateManager(typeof(MoveSystem));
