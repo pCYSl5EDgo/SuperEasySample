@@ -151,7 +151,6 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
     protected override void OnUpdate()
     {
         InitializeOnUpdate();
-        profileUpdateGatherChunks.Begin();
         GatherChunks();
         profileUpdateGatherChunks.End();
         profileUpdateDraw.Begin();
