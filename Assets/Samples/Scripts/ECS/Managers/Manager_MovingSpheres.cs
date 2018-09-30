@@ -24,7 +24,6 @@ public sealed class Manager_MovingSpheres : MonoBehaviour
         archetype = manager.CreateArchetype(ComponentType.Create<Position>(), ComponentType.Create<Velocity>(), ComponentType.Create<MeshInstanceRendererInstancedIndirectSystem.MeshInstanceRendererIndex>());
         var src = manager.CreateEntity(archetype);
         manager.SetSharedComponentData(src, new MeshInstanceRendererInstancedIndirectSystem.MeshInstanceRendererIndex(1u));
-        Debug.Log(renderers[0].castShadows);
         Set(src);
         using (var _ = new NativeArray<Entity>(11450, Allocator.Temp, NativeArrayOptions.UninitializedMemory))
         {

@@ -40,6 +40,6 @@ sealed class Manager_MovingCubes : MonoBehaviour
     private void Set(in Entity e)
     {
         manager.SetComponentData(e, new Position { Value = new Unity.Mathematics.float3((Random.value - 0.5f) * 40, (Random.value - 0.5f) * 40, (Random.value - 0.5f) * 40) });
-        manager.SetComponentData(e, new Velocity { Value = new Unity.Mathematics.float3((Random.value - 0.5f) * 40, (Random.value - 0.5f) * 40, (Random.value - 0.5f) * 40) });
+        manager.SetComponentData(e, new Velocity { Value = new Unity.Mathematics.float3((Random.value - 0.5f), (Random.value - 0.5f), (Random.value - 0.5f)) });
     }
 }

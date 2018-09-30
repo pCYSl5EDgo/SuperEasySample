@@ -18,13 +18,13 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
         if ((this.renderers = renderers) == null) throw new ArgumentNullException("Renderers must not be null!");
         if ((this.shader = shader) == null) throw new ArgumentNullException();
         if (renderers.Length == 0) throw new ArgumentException("Length of the renderers must not be 0!");
-        buffers_Position = new(ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
-        buffers_Position_Rotation = new(ComputeBuffer, ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
-        buffers_Position_Scale = new(ComputeBuffer, ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
-        buffers_Position_Scale_Rotation = new(ComputeBuffer, ComputeBuffer, ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
-        buffers_Rotation = new(ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
-        buffers_Scale = new(ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
-        buffers_Scale_Rotation = new(ComputeBuffer, ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
+        buffers_Position = new (ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
+        buffers_Position_Rotation = new (ComputeBuffer, ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
+        buffers_Position_Scale = new (ComputeBuffer, ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
+        buffers_Position_Scale_Rotation = new (ComputeBuffer, ComputeBuffer, ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
+        buffers_Rotation = new (ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
+        buffers_Scale = new (ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
+        buffers_Scale_Rotation = new (ComputeBuffer, ComputeBuffer, ComputeBuffer, ComputeBuffer, int, int)[renderers.Length];
         var tmpArgs = new uint[5];
         for (int i = 0; i < buffers_Position.Length; i++)
         {
@@ -38,6 +38,7 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
             (buffers_Scale_Rotation[i].args = new ComputeBuffer(5, sizeof(uint), ComputeBufferType.IndirectArguments)).SetData(tmpArgs);
             (buffers_Position_Scale_Rotation[i].args = new ComputeBuffer(5, sizeof(uint), ComputeBufferType.IndirectArguments)).SetData(tmpArgs);
         }
+        this.capacity = 1024;
     }
 
     private readonly Camera activeCamera;
@@ -70,21 +71,6 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
     private static readonly ProfilerMarker profileUpdateDraw = new ProfilerMarker("Custom Draw");
 
     private int capacity;
-
-    protected override void OnCreateManager() => this.capacity = GetPow2Container(1024);
-
-    private static int GetPow2Container(int capacity)
-    {
-        if (capacity == 0) return 1;
-        if (((capacity - 1) & capacity) == 0) return capacity;
-        var v = (uint)capacity;
-        v |= (v >> 1);
-        v |= (v >> 2);
-        v |= (v >> 4);
-        v |= (v >> 8);
-        v |= (v >> 16);
-        return 1 << math.countbits(v);
-    }
 
     protected override void OnDestroyManager()
     {
@@ -151,11 +137,10 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
     protected override void OnUpdate()
     {
         InitializeOnUpdate();
-        GatherChunks();
-        profileUpdateGatherChunks.End();
-        profileUpdateDraw.Begin();
-        Draw();
-        profileUpdateDraw.End();
+        using (profileUpdateGatherChunks.Auto())
+            GatherChunks();
+        using (profileUpdateDraw.Auto())
+            Draw();
     }
 
     private void InitializeOnUpdate()
@@ -184,25 +169,24 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
 
     private void GatherChunks()
     {
-        var acct_Position = GetArchetypeChunkComponentType<Position>(true);
-        var acct_Scale = GetArchetypeChunkComponentType<Scale>(true);
-        var acct_Rotation = GetArchetypeChunkComponentType<Rotation>(true);
-        var acsct_MeshInstanceRendererIndex = GetArchetypeChunkSharedComponentType<MeshInstanceRendererIndex>();
-        using (var chunks = EntityManager.CreateArchetypeChunkArray(foundArchetypes, Allocator.Temp))
+        var PositionTypeRO = GetArchetypeChunkComponentType<Position>(true);
+        var ScaleTypeRO = GetArchetypeChunkComponentType<Scale>(true);
+        var RotationTypeRO = GetArchetypeChunkComponentType<Rotation>(true);
+        var MeshInstanceRendererIndexTypeRO = GetArchetypeChunkSharedComponentType<MeshInstanceRendererIndex>();
+        using (var chunks = EntityManager.CreateArchetypeChunkArray(foundArchetypes, Allocator.TempJob))
         {
             for (int i = 0; i < chunks.Length; i++)
             {
-                var sharedIndex = chunks[i].GetSharedComponentIndex(acsct_MeshInstanceRendererIndex);
+                var sharedIndex = chunks[i].GetSharedComponentIndex(MeshInstanceRendererIndexTypeRO);
+                if (sharedIndex == 0) continue;
                 var rendererIndex = EntityManager.GetSharedComponentData<MeshInstanceRendererIndex>(sharedIndex).Value;
-                if (rendererIndex == 0) continue;
 
-                var pos = chunks[i].GetNativeArray(acct_Position);
-                var scl = chunks[i].GetNativeArray(acct_Scale);
-                var rot = chunks[i].GetNativeArray(acct_Rotation);
-
+                var pos = chunks[i].GetNativeArray(PositionTypeRO);
+                var scl = chunks[i].GetNativeArray(ScaleTypeRO);
+                var rot = chunks[i].GetNativeArray(RotationTypeRO);
                 int length = Math.Max(Math.Max(pos.Length, scl.Length), rot.Length);
                 if (length > capacity)
-                    capacity = GetPow2Container(length);
+                    capacity = math.ceilpow2(length);
                 switch (-1 + (pos.Length > 0 ? 1 : 0) + (scl.Length > 0 ? 2 : 0) + (rot.Length > 0 ? 4 : 0))
                 {
                     case 0: // Position
@@ -245,7 +229,7 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
         }
         else if (buffer.count + length > buffer.maxCount)
         {
-            capacity = Math.Max(capacity, GetPow2Container(buffer.count + length));
+            capacity = Math.Max(capacity, math.ceilpow2(buffer.count + length));
             buffer.transforms.Release();
             buffer.transforms = new ComputeBuffer(capacity, UnsafeUtility.SizeOf<float4x4>());
             ReAllocate<float3>(ref buffer.positions, buffer.count);
@@ -271,7 +255,7 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
         }
         else if (buffer.count + length > buffer.maxCount)
         {
-            capacity = Math.Max(capacity, GetPow2Container(buffer.count + length));
+            capacity = Math.Max(capacity, math.ceilpow2(buffer.count + length));
             buffer.transforms.Release();
             buffer.transforms = new ComputeBuffer(capacity, UnsafeUtility.SizeOf<float4x4>());
             ReAllocate<float3>(ref buffer.scales, buffer.count);
@@ -295,7 +279,7 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
         }
         else if (buffer.count + length > buffer.maxCount)
         {
-            capacity = Math.Max(capacity, GetPow2Container(buffer.count + length));
+            capacity = Math.Max(capacity, math.ceilpow2(buffer.count + length));
             buffer.transforms.Release();
             buffer.transforms = new ComputeBuffer(capacity, UnsafeUtility.SizeOf<float4x4>());
             ReAllocate<float3>(ref buffer.positions, buffer.count);
@@ -318,7 +302,7 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
         }
         else if (buffer.count + length > buffer.maxCount)
         {
-            capacity = Math.Max(capacity, GetPow2Container(buffer.count + length));
+            capacity = Math.Max(capacity, math.ceilpow2(buffer.count + length));
             buffer.transforms.Release();
             buffer.transforms = new ComputeBuffer(capacity, UnsafeUtility.SizeOf<float4x4>());
             ReAllocate<float4>(ref buffer.rotations, buffer.count);
@@ -340,7 +324,7 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
         }
         else if (buffer.count + length > buffer.maxCount)
         {
-            capacity = Math.Max(capacity, GetPow2Container(buffer.count + length));
+            capacity = Math.Max(capacity, math.ceilpow2(buffer.count + length));
             buffer.transforms.Release();
             buffer.transforms = new ComputeBuffer(capacity, UnsafeUtility.SizeOf<float4x4>());
             ReAllocate<float3>(ref buffer.positions, buffer.count);
@@ -363,7 +347,7 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
         }
         else if (buffer.count + length > buffer.maxCount)
         {
-            capacity = Math.Max(capacity, GetPow2Container(buffer.count + length));
+            capacity = Math.Max(capacity, math.ceilpow2(buffer.count + length));
             buffer.transforms.Release();
             buffer.transforms = new ComputeBuffer(capacity, UnsafeUtility.SizeOf<float4x4>());
             ReAllocate<float3>(ref buffer.scales, buffer.count);
@@ -384,7 +368,7 @@ public sealed partial class MeshInstanceRendererInstancedIndirectSystem : Compon
         }
         else if (buffer.count + length > buffer.maxCount)
         {
-            capacity = Math.Max(capacity, GetPow2Container(buffer.count + length));
+            capacity = Math.Max(capacity, math.ceilpow2(buffer.count + length));
             buffer.transforms.Release();
             buffer.transforms = new ComputeBuffer(capacity, UnsafeUtility.SizeOf<float4x4>());
             ReAllocate<float3>(ref buffer.positions, buffer.count);
